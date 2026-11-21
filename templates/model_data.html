@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>SafeRoute AI | Model & Data</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}">
+<style>
+.model-page {
+    --m-card: #ffffff;
+    --m-border: #e2e8f0;
+    --m-shadow: 0 8px 24px rgba(15,23,42,0.07);
+    --m-head: #0f172a;
+    --m-body: #334155;
+    --m-muted: #64748b;
+    --m-blue: #2563eb;
+    --m-blue-dark: #1d4ed8;
+    --m-amber: #d97706;
+    --m-amber-light: #f59e0b;
+    --m-green: #15803d;
+    --m-track: #e2e8f0;
+
+    width: min(1400px, calc(100% - 42px));
+    margin: 0 auto;
+    padding: 30px 0 70px;
+}
+
+/* HERO */
+.model-hero {
+    position: relative; overflow: hidden;
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 30px; padding: 36px 34px; margin-bottom: 18px; border-radius: 18px;
+    background:
+        radial-gradient(circle at 80% 20%, rgba(37,99,235,0.10), transparent 35%),
+        linear-gradient(135deg, #ffffff, #eef3fb);
+    border: 1px solid var(--m-border);
+    box-shadow: 0 10px 30px rgba(15,23,42,0.08);
+}
+.model-hero::before {
+    content: ""; position: absolute; inset: auto -80px -180px auto;
+    width: 430px; height: 430px; border-radius: 50%;
+    border: 1px solid rgba(37,99,235,0.10);
+    box-shadow: 0 0 0 55px rgba(37,99,235,0.025), 0 0 0 110px rgba(37,99,235,0.015);
+}
+.model-kicker {
+    position: relative; color: var(--m-blue-dark);
+    font-size: 11px; font-weight: 700; letter-spacing: 0.16em;
+    text-transform: uppercase; margin-bottom: 7px;
+}
+.model-hero h1 {
+    position: relative; margin: 0; color: var(--m-head);
+    font-family: "Space Grotesk", sans-serif;
+    font-size: clamp(28px, 4vw, 43px); letter-spacing: -0.045em;
+}
+.model-hero p {
+    position: relative; max-width: 680px; margin: 9px 0 0;
+    color: #475569; font-size: 14px;
+}
+.model-status {
+    position: relative; min-width: 200px; padding: 14px 16px;
+    border-radius: 12px; background: #f0fdf4;
+    border: 1px solid rgba(22,163,74,0.30);
+}
+.model-status-label { color: #475569; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; }
+.model-status-value {
+    display: flex; align-items: center; gap: 7px; margin-top: 6px;
+    color: var(--m-green); font-family: "Space Grotesk", sans-serif;
+    font-size: 15px; font-weight: 700;
+}
+.model-status small { display: block; margin-top: 6px; color: #475569; font-size: 11px; }
+
+/* KPI CARDS */
+.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 18px; }
+.kpi-card {
+    position: relative; min-height: 125px; padding: 18px; overflow: hidden;
+    border-radius: 15px; background: var(--m-card);
+    border: 1px solid var(--m-border); box-shadow: var(--m-shadow);
+}
+.kpi-card::after {
+    content: ""; position: absolute; width: 85px; height: 85px;
+    right: -35px; bottom: -35px; border-radius: 50%;
+    border: 1px solid rgba(37,99,235,0.12);
+}
+.kpi-label { color: #475569; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; }
+.kpi-value {
+    margin-top: 10px; color: var(--m-head);
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 32px; font-weight: 700; letter-spacing: -0.04em;
+}
+.kpi-card.primary .kpi-value { color: var(--m-blue-dark); }
+.kpi-card.warning .kpi-value { color: var(--m-amber); }
+.kpi-sub { margin-top: 5px; color: var(--m-muted); font-size: 11px; }
+
+/* PANELS */
+.model-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 18px; margin-bottom: 18px; }
+.model-panel {
+    padding: 22px; border-radius: 17px; background: var(--m-card);
+    border: 1px solid var(--m-border); box-shadow: var(--m-shadow);
+}
+.section-heading { display: flex; align-items: center; gap: 11px; margin-bottom: 4px; }
+.section-number {
+    color: var(--m-blue-dark); font-family: "Space Grotesk", sans-serif;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.12em;
+}
+.section-heading h2 {
+    margin: 0; color: var(--m-head);
+    font-family: "Space Grotesk", sans-serif; font-size: 18px;
+}
+.section-description { margin: 0 0 20px; color: #475569; font-size: 12.5px; line-height: 1.6; }
+
+/* DATASET */
+.dataset-stat {
+    display: grid; grid-template-columns: 150px 1fr 75px;
+    align-items: center; gap: 13px; margin-bottom: 15px;
+}
+.dataset-stat:last-child { margin-bottom: 0; }
+.dataset-name { color: var(--m-body); font-size: 12px; }
+.dataset-track, .model-track, .metric-track, .feature-track {
+    overflow: hidden; border-radius: 999px;
+    background: var(--m-track); border: 1px solid rgba(15,23,42,0.06);
+}
+.dataset-track { height: 9px; }
+.dataset-fill, .feature-fill, .metric-fill.minor, .model-fill.deployed {
+    height: 100%; border-radius: inherit;
+    background: linear-gradient(90deg, #1d4ed8, #3b82f6);
+}
+.dataset-value {
+    color: var(--m-head); font-family: "Space Grotesk", sans-serif;
+    font-size: 12px; font-weight: 600; text-align: right;
+}
+.dataset-note {
+    margin-top: 17px; padding-top: 13px;
+    border-top: 1px solid var(--m-border); color: var(--m-muted); font-size: 11px;
+}
+
+/* CLASS BALANCE */
+.balance-wrap { display: flex; align-items: center; gap: 27px; }
+.balance-ring { position: relative; width: 145px; height: 145px; flex-shrink: 0; border-radius: 50%; }
+.balance-ring::after {
+    content: ""; position: absolute; inset: 17px; border-radius: 50%;
+    background: #ffffff; border: 1px solid var(--m-border);
+}
+.balance-center {
+    position: absolute; inset: 0; z-index: 2;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.balance-center strong { color: var(--m-head); font-family: "Space Grotesk", sans-serif; font-size: 25px; }
+.balance-center span { margin-top: 2px; color: var(--m-muted); font-size: 9px; font-weight: 700; letter-spacing: 0.12em; }
+.balance-legend { flex: 1; }
+.balance-item {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--m-border);
+}
+.balance-item:last-child { border-bottom: none; }
+.balance-item-name { display: flex; align-items: center; gap: 7px; color: var(--m-body); font-size: 12px; }
+.balance-dot { width: 9px; height: 9px; border-radius: 50%; }
+.balance-dot.minor { background: var(--m-blue); }
+.balance-dot.elevated { background: var(--m-amber-light); }
+.balance-item-value { color: var(--m-head); font-size: 12px; font-weight: 700; }
+.balance-item-value span { color: var(--m-muted); font-weight: 500; }
+
+/* MODEL COMPARISON */
+.model-comparison { margin-top: 5px; }
+.model-item { margin-bottom: 17px; }
+.model-item:last-child { margin-bottom: 0; }
+.model-label {
+    display: flex; justify-content: space-between; gap: 14px;
+    margin-bottom: 6px; color: var(--m-body); font-size: 12px;
+}
+.model-label strong { color: var(--m-muted); font-family: "Space Grotesk", sans-serif; font-size: 12px; }
+.model-item.deployed {
+    padding: 11px 12px; margin-left: -12px; margin-right: -12px;
+    border-radius: 10px; background: rgba(37,99,235,0.07);
+    border: 1px solid rgba(37,99,235,0.20);
+}
+.model-name-deployed { color: var(--m-blue-dark); font-weight: 700; }
+.deployed-tag {
+    display: inline-block; margin-left: 7px; padding: 2px 7px;
+    border-radius: 999px; color: var(--m-green); background: #dcfce7;
+    border: 1px solid rgba(22,163,74,0.30);
+    font-size: 9px; font-weight: 800; letter-spacing: 0.08em;
+}
+.model-track { height: 9px; }
+.model-fill { height: 100%; border-radius: inherit; background: #94a3b8; }
+
+/* PRECISION / RECALL */
+.performance-column + .performance-column { margin-top: 23px; }
+.performance-class { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.performance-class-title { color: var(--m-body); font-size: 13px; font-weight: 700; }
+.performance-class-badge {
+    padding: 3px 9px; border-radius: 999px;
+    font-size: 9px; font-weight: 800; letter-spacing: 0.08em;
+}
+.performance-class-badge.minor {
+    color: var(--m-blue-dark); background: #dbeafe;
+    border: 1px solid rgba(37,99,235,0.25);
+}
+.performance-class-badge.elevated {
+    color: #b45309; background: #fef3c7;
+    border: 1px solid rgba(217,119,6,0.30);
+}
+.metric-bar-row {
+    display: grid; grid-template-columns: 70px 1fr 46px;
+    align-items: center; gap: 8px; margin-bottom: 10px;
+}
+.metric-name { color: var(--m-muted); font-size: 11px; }
+.metric-track { height: 8px; }
+.metric-fill { height: 100%; border-radius: inherit; }
+.metric-fill.elevated { background: linear-gradient(90deg, #d97706, #f59e0b); }
+.metric-value { color: var(--m-body); font-size: 11px; font-weight: 700; text-align: right; }
+
+/* FEATURE IMPORTANCE */
+.feature-row {
+    display: grid; grid-template-columns: 160px 1fr 50px;
+    align-items: center; gap: 10px; margin-bottom: 12px;
+}
+.feature-name {
+    overflow: hidden; color: var(--m-body); font-size: 12px;
+    text-overflow: ellipsis; white-space: nowrap;
+}
+.feature-track { height: 8px; }
+.feature-value { color: var(--m-body); font-size: 11px; text-align: right; }
+
+/* THRESHOLD */
+.threshold-layout { display: grid; grid-template-columns: 200px 1fr; gap: 24px; align-items: center; }
+.threshold-card {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 170px; border-radius: 15px; background: #fffbeb;
+    border: 1px solid rgba(217,119,6,0.35);
+}
+.threshold-card strong {
+    color: var(--m-amber); font-family: "Space Grotesk", sans-serif;
+    font-size: 48px; letter-spacing: -0.05em;
+}
+.threshold-card span { margin-top: 3px; color: var(--m-muted); font-size: 9px; font-weight: 700; letter-spacing: 0.12em; }
+.threshold-copy { color: var(--m-body); font-size: 14px; line-height: 1.75; }
+.threshold-copy strong { color: #b45309; }
+
+/* FOOTER */
+.model-footer {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 20px; padding: 16px 3px 0; color: var(--m-muted); font-size: 11px;
+}
+.model-footer strong { color: var(--m-body); }
+
+/* RESPONSIVE */
+@media (max-width: 1000px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .model-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 650px) {
+    .model-page { width: calc(100% - 22px); padding-top: 17px; }
+    .model-hero { flex-direction: column; align-items: flex-start; }
+    .model-status { width: 100%; }
+    .kpi-grid { grid-template-columns: 1fr; }
+    .balance-wrap { flex-direction: column; align-items: flex-start; }
+    .threshold-layout { grid-template-columns: 1fr; }
+    .dataset-stat { grid-template-columns: 110px 1fr 60px; }
+    .feature-row { grid-template-columns: 105px 1fr 40px; }
+    .model-footer { flex-direction: column; align-items: flex-start; }
+}
+</style>
+
+</head>
+
+<body>
+
+<!-- =========================================================
+     NAVIGATION
+========================================================= -->
+
+<header class="topbar">
+
+    <a class="brand" href="{{ url_for('index') }}">
+
+        <div class="brand-mark">S5</div>
+
+        <div class="brand-copy">
+
+            <div class="brand-name">
+                SafeRoute AI
+            </div>
+
+            <div class="brand-tag">
+                Safer Roads. Smarter Decisions.
+            </div>
+
+        </div>
+
+    </a>
+
+
+    <nav class="navlinks">
+
+        <a href="{{ url_for('index') }}">
+            Predict
+        </a>
+
+        <a class="active" href="{{ url_for('model_data') }}">
+            Model &amp; Data
+        </a>
+
+    </nav>
+
+
+    <div class="topbar-right">
+
+        <span class="system-status">
+            <span class="status-dot"></span>
+            System Online
+        </span>
+
+        {% if current_user %}
+
+            <span class="user-name">
+                {{ current_user }}
+            </span>
+
+            {% if is_admin %}
+                <a href="{{ url_for('admin') }}">
+                    Admin
+                </a>
+            {% endif %}
+
+            <a href="{{ url_for('logout') }}">
+                Log out
+            </a>
+
+        {% endif %}
+
+    </div>
+
+</header>
+
+
+<main class="model-page">
+
+{% set total = stats.minor_count + stats.elevated_count %}
+
+{% set minor_pct =
+   (stats.minor_count / total * 100) | round(1)
+%}
+
+{% set elevated_pct =
+   (stats.elevated_count / total * 100) | round(1)
+%}
+
+{% set max_f1 = stats.models[0].f1 %}
+
+{% set max_imp = stats.features[0][1] %}
+
+
+<!-- =========================================================
+     HERO
+========================================================= -->
+
+<section class="model-hero">
+
+    <div>
+
+        <div class="model-kicker">
+            AI MODEL INTELLIGENCE
+        </div>
+
+        <h1>
+            Model &amp; Data
+        </h1>
+
+        <p>
+            Understand how the Midtown Manhattan accident-risk
+            model was trained, evaluated, and deployed.
+        </p>
+
+    </div>
+
+
+    <div class="model-status">
+
+        <div class="model-status-label">
+            DEPLOYED MODEL
+        </div>
+
+        <div class="model-status-value">
+
+            <span class="status-dot"></span>
+
+            Random Forest + SMOTE
+
+        </div>
+
+        <small>
+            Threshold:
+            {{ stats.threshold }}
+        </small>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     KEY METRICS
+========================================================= -->
+
+<section class="kpi-grid">
+
+    <div class="kpi-card">
+
+        <div class="kpi-label">
+            MIDTOWN RECORDS
+        </div>
+
+        <div class="kpi-value">
+            {{ '{:,}'.format(stats.midtown_count) }}
+        </div>
+
+        <div class="kpi-sub">
+            Training population
+        </div>
+
+    </div>
+
+
+    <div class="kpi-card primary">
+
+        <div class="kpi-label">
+            MODEL ACCURACY
+        </div>
+
+        <div class="kpi-value">
+            {{ stats.accuracy }}%
+        </div>
+
+        <div class="kpi-sub">
+            Held-out test set
+        </div>
+
+    </div>
+
+
+    <div class="kpi-card warning">
+
+        <div class="kpi-label">
+            ELEVATED F1
+        </div>
+
+        <div class="kpi-value">
+            {{ stats.class1.f1 }}%
+        </div>
+
+        <div class="kpi-sub">
+            Minority class
+        </div>
+
+    </div>
+
+
+    <div class="kpi-card">
+
+        <div class="kpi-label">
+            DECISION THRESHOLD
+        </div>
+
+        <div class="kpi-value">
+            {{ (stats.threshold * 100)|round|int }}%
+        </div>
+
+        <div class="kpi-sub">
+            Elevated-risk trigger
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     DATASET + CLASS BALANCE
+========================================================= -->
+
+<section class="model-grid">
+
+
+    <!-- DATASET -->
+
+    <div class="model-panel">
+
+        <div class="section-heading">
+
+            <span class="section-number">
+                01
+            </span>
+
+            <h2>
+                Dataset pipeline
+            </h2>
+
+        </div>
+
+        <p class="section-description">
+            The training population was narrowed from citywide
+            collision records to the Midtown Manhattan study area.
+        </p>
+
+
+        <div class="dataset-stat">
+
+            <div class="dataset-name">
+                NYC crashes
+            </div>
+
+            <div class="dataset-track">
+
+                <div
+                    class="dataset-fill"
+                    style="width:100%;">
+                </div>
+
+            </div>
+
+            <div class="dataset-value">
+                {{ '{:,}'.format(stats.full_count) }}
+            </div>
+
+        </div>
+
+
+        <div class="dataset-stat">
+
+            <div class="dataset-name">
+                Manhattan
+            </div>
+
+            <div class="dataset-track">
+
+                <div
+                    class="dataset-fill"
+                    style="width:68%;">
+                </div>
+
+            </div>
+
+            <div class="dataset-value">
+                {{ '{:,}'.format(stats.manhattan_count) }}
+            </div>
+
+        </div>
+
+
+        <div class="dataset-stat">
+
+            <div class="dataset-name">
+                Midtown study area
+            </div>
+
+            <div class="dataset-track">
+
+                <div
+                    class="dataset-fill"
+                    style="width:40%;">
+                </div>
+
+            </div>
+
+            <div class="dataset-value">
+                {{ '{:,}'.format(stats.midtown_count) }}
+            </div>
+
+        </div>
+
+
+        <div class="dataset-note">
+
+            80/20 split:
+            {{ stats.train_count }}
+            training rows /
+            {{ stats.test_count }}
+            held-out test rows.
+
+        </div>
+
+    </div>
+
+
+    <!-- CLASS BALANCE -->
+
+    <div class="model-panel">
+
+        <div class="section-heading">
+
+            <span class="section-number">
+                02
+            </span>
+
+            <h2>
+                Class balance
+            </h2>
+
+        </div>
+
+        <p class="section-description">
+            Elevated-risk crashes are the minority class.
+            SMOTE was used during training to compensate for imbalance.
+        </p>
+
+
+        
+<div class="balance-wrap">
+
+            <div class="balance-ring"
+                 style="background: conic-gradient(#f59e0b {{ elevated_pct }}%, #2563eb 0);">
+
+                <div class="balance-center">
+
+                    <strong>
+                        {{ elevated_pct }}%
+                    </strong>
+
+                    <span>
+                        ELEVATED
+                    </span>
+
+                </div>
+
+            
+
+
+            <div class="balance-legend">
+
+                <div class="balance-item">
+
+                    <div class="balance-item-name">
+
+                        <span class="balance-dot minor"></span>
+
+                        Minor crashes
+
+                    </div>
+
+                    <div class="balance-item-value">
+
+                        {{ '{:,}'.format(stats.minor_count) }}
+
+                        <span style="color:var(--text-muted);">
+                            ({{ minor_pct }}%)
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <div class="balance-item">
+
+                    <div class="balance-item-name">
+
+                        <span class="balance-dot elevated"></span>
+
+                        Elevated crashes
+
+                    </div>
+
+                    <div class="balance-item-value">
+
+                        {{ '{:,}'.format(stats.elevated_count) }}
+
+                        <span style="color:var(--text-muted);">
+                            ({{ elevated_pct }}%)
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     MODEL COMPARISON + PRECISION
+========================================================= -->
+
+<section class="model-grid">
+
+
+    <!-- MODEL COMPARISON -->
+
+    <div class="model-panel">
+
+        <div class="section-heading">
+
+            <span class="section-number">
+                03
+            </span>
+
+            <h2>
+                Model comparison
+            </h2>
+
+        </div>
+
+        <p class="section-description">
+            F1 score for the elevated-risk class.
+            Higher values indicate a better balance between
+            precision and recall for the class this tool is
+            designed to detect.
+        </p>
+
+
+        <div class="model-comparison">
+
+            {% for m in stats.models %}
+
+            <div class="model-item
+                {{ 'deployed' if m.deployed }}">
+
+                <div class="model-label">
+
+                    <span class="
+                        {{ 'model-name-deployed' if m.deployed }}">
+
+                        {{ m.name }}
+
+                        {% if m.deployed %}
+
+                        <span class="deployed-tag">
+                            DEPLOYED
+                        </span>
+
+                        {% endif %}
+
+                    </span>
+
+                    <strong>
+                        {{ m.f1 }}%
+                    </strong>
+
+                </div>
+
+
+                <div class="model-track">
+
+                    <div
+                        class="model-fill
+                        {{ 'deployed' if m.deployed }}"
+                        style="
+                            width:
+                            {{ (m.f1 / max_f1 * 100)|round(1) }}%;
+                        ">
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+
+    <!-- PRECISION / RECALL -->
+
+    <div class="model-panel">
+
+        <div class="section-heading">
+
+            <span class="section-number">
+                04
+            </span>
+
+            <h2>
+                Precision &amp; recall
+            </h2>
+
+        </div>
+
+        <p class="section-description">
+            Performance on the
+            {{ stats.test_count }}-row held-out test set,
+            separated by class.
+        </p>
+
+
+        <!-- MINOR -->
+
+        <div class="performance-column">
+
+            <div class="performance-class">
+
+                <div class="performance-class-title">
+                    Class 0 — Minor
+                    (n={{ stats.class0.n }})
+                </div>
+
+                <div class="performance-class-badge minor">
+                    MINOR
+                </div>
+
+            </div>
+
+
+            <div class="metric-bar-row">
+
+                <div class="metric-name">
+                    Precision
+                </div>
+
+                <div class="metric-track">
+
+                    <div
+                        class="metric-fill minor"
+                        style="width:{{ stats.class0.precision }}%;">
+                    </div>
+
+                </div>
+
+                <div class="metric-value">
+                    {{ stats.class0.precision }}%
+                </div>
+
+            </div>
+
+
+            <div class="metric-bar-row">
+
+                <div class="metric-name">
+                    Recall
+                </div>
+
+                <div class="metric-track">
+
+                    <div
+                        class="metric-fill minor"
+                        style="width:{{ stats.class0.recall }}%;">
+                    </div>
+
+                </div>
+
+                <div class="metric-value">
+                    {{ stats.class0.recall }}%
+                </div>
+
+            </div>
+
+
+            <div class="metric-bar-row">
+
+                <div class="metric-name">
+                    F1
+                </div>
+
+                <div class="metric-track">
+
+                    <div
+                        class="metric-fill minor"
+                        style="width:{{ stats.class0.f1 }}%;">
+                    </div>
+
+                </div>
+
+                <div class="metric-value">
+                    {{ stats.class0.f1 }}%
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ELEVATED -->
+
+        <div class="performance-column">
+
+            <div class="performance-class">
+
+                <div class="performance-class-title">
+                    Class 1 — Elevated
+                    (n={{ stats.class1.n }})
+                </div>
+
+                <div class="performance-class-badge elevated">
+                    TARGET
+                </div>
+
+            </div>
+
+
+            <div class="metric-bar-row">
+
+                <div class="metric-name">
+                    Precision
+                </div>
+
+                <div class="metric-track">
+
+                    <div
+                        class="metric-fill elevated"
+                        style="width:{{ stats.class1.precision }}%;">
+                    </div>
+
+                </div>
+
+                <div class="metric-value">
+                    {{ stats.class1.precision }}%
+                </div>
+
+            </div>
+
+
+            <div class="metric-bar-row">
+
+                <div class="metric-name">
+                    Recall
+                </div>
+
+                <div class="metric-track">
+
+                    <div
+                        class="metric-fill elevated"
+                        style="width:{{ stats.class1.recall }}%;">
+                    </div>
+
+                </div>
+
+                <div class="metric-value">
+                    {{ stats.class1.recall }}%
+                </div>
+
+            </div>
+
+
+            <div class="metric-bar-row">
+
+                <div class="metric-name">
+                    F1
+                </div>
+
+                <div class="metric-track">
+
+                    <div
+                        class="metric-fill elevated"
+                        style="width:{{ stats.class1.f1 }}%;">
+                    </div>
+
+                </div>
+
+                <div class="metric-value">
+                    {{ stats.class1.f1 }}%
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     FEATURES
+========================================================= -->
+
+<section class="model-panel"
+         style="margin-bottom:18px;">
+
+    <div class="section-heading">
+
+        <span class="section-number">
+            05
+        </span>
+
+        <h2>
+            What the model weighs most
+        </h2>
+
+    </div>
+
+    <p class="section-description">
+        Global feature importance from the deployed Random Forest.
+        These values explain what the model relied on most during
+        training; they are not a per-case explanation.
+    </p>
+
+
+    {% for name, imp in stats.features %}
+
+    <div class="feature-row">
+
+        <div class="feature-name">
+            {{ name }}
+        </div>
+
+        <div class="feature-track">
+
+            <div
+                class="feature-fill"
+                style="
+                    width:
+                    {{ (imp / max_imp * 100)|round(1) }}%;
+                ">
+            </div>
+
+        </div>
+
+        <div class="feature-value">
+            {{ imp }}%
+        </div>
+
+    </div>
+
+    {% endfor %}
+
+</section>
+
+
+<!-- =========================================================
+     THRESHOLD
+========================================================= -->
+
+<section class="model-panel">
+
+    <div class="section-heading">
+
+        <span class="section-number">
+            06
+        </span>
+
+        <h2>
+            Decision threshold
+        </h2>
+
+    </div>
+
+    <p class="section-description">
+        The threshold controls when the model changes the output
+        from minor risk to elevated risk.
+    </p>
+
+
+    <div class="threshold-layout">
+
+        <div class="threshold-card">
+
+            <strong>
+                {{ (stats.threshold * 100)|round|int }}%
+            </strong>
+
+            <span>
+                ELEVATED-RISK TRIGGER
+            </span>
+
+        </div>
+
+
+        <div class="threshold-copy">
+
+            The model flags
+            <strong>elevated risk</strong>
+            once its predicted probability passes
+            {{ (stats.threshold * 100)|round|int }}%,
+            rather than waiting for the default 50% threshold.
+
+            <br><br>
+
+            With this setting, the threshold evaluation reports
+
+            <strong>
+                {{ stats.threshold_recall }}% recall
+            </strong>
+
+            for real elevated-risk crashes, with
+
+            <strong>
+                {{ stats.threshold_precision }}% precision
+            </strong>.
+
+            <br><br>
+
+            This is intentionally oriented toward
+            <strong>early caution</strong>
+            rather than a definitive accident decision.
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     FOOTER
+========================================================= -->
+
+<div class="model-footer">
+
+    <span>
+        Trained on
+        <strong>
+            {{ '{:,}'.format(stats.midtown_count) }}
+        </strong>
+        Midtown Manhattan collision records.
+    </span>
+
+    <span>
+        Random Forest + SMOTE
+        · Threshold
+        <strong>
+            {{ stats.threshold }}
+        </strong>
+    </span>
+
+</div>
+
+</main>
+
+</body>
+</html>

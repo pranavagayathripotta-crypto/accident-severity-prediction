@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>SafeRoute AI | Accident Risk</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+{% if result %}
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+{% endif %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='white.css') }}">
+</head>
+
+<body>
+
+<!-- =========================
+     NAVIGATION
+========================= -->
+<header class="topbar">
+
+    <a class="brand" href="{{ url_for('index') }}">
+        <div class="brand-mark">S5</div>
+
+        <div class="brand-copy">
+            <div class="brand-name">SafeRoute AI</div>
+            <div class="brand-tag">Safer Roads. Smarter Decisions.</div>
+        </div>
+    </a>
+
+    <nav class="navlinks">
+        <a class="active" href="{{ url_for('index') }}">
+            Predict
+        </a>
+
+        <a href="/model-data">
+            Model &amp; Data
+        </a>
+    </nav>
+
+    <div class="topbar-right">
+
+        <span class="system-status">
+            <span class="status-dot"></span>
+            System Online
+        </span>
+
+        {% if current_user %}
+            <span class="user-name">{{ current_user }}</span>
+
+            {% if is_admin %}
+                <a href="{{ url_for('admin') }}">Admin</a>
+            {% endif %}
+
+            <a href="{{ url_for('logout') }}">Log out</a>
+        {% endif %}
+
+    </div>
+
+</header>
+
+
+<main class="page">
+
+{% if load_error %}
+<div class="notice error-notice">
+    <strong>System notice</strong>
+    <span>{{ load_error }}</span>
+</div>
+{% endif %}
+
+{% if error %}
+<div class="notice error-notice">
+    <strong>Prediction error</strong>
+    <span>{{ error }}</span>
+</div>
+{% endif %}
+
+
+<!-- ============================================================
+     PREDICTION RESULT
+============================================================ -->
+
+{% if result %}
+
+<section class="hero-grid">
+
+    <!-- MAP -->
+    <div class="map-panel glass-panel">
+
+        <div class="panel-heading">
+            <div>
+                <div class="eyebrow">LIVE LOCATION</div>
+                <h2>Midtown Manhattan</h2>
+            </div>
+
+            <div class="map-live">
+                <span class="status-dot"></span>
+                LIVE
+            </div>
+        </div>
+
+        <div class="map-container">
+            <div id="map"></div>
+
+            <div class="map-overlay location-card">
+
+                <div class="location-icon">⌖</div>
+
+                <div>
+                    <div class="overlay-label">
+                        SELECTED LOCATION
+                    </div>
+
+                    <div class="location-name">
+                        {{ result.location_label if result.location_label else 'Selected coordinates' }}
+                    </div>
+
+                    <div class="coordinates">
+                        {{ result.latitude }}, {{ result.longitude }}
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="map-overlay condition-strip">
+
+                <div class="condition-item">
+                    <span class="condition-icon">◷</span>
+                    <div>
+                        <span class="condition-label">TIME</span>
+                        <strong>
+                            {{ '%02d:00' % result.hour }}
+                        </strong>
+                    </div>
+                </div>
+
+                <div class="condition-item">
+                    <span class="condition-icon">☁</span>
+                    <div>
+                        <span class="condition-label">WEATHER</span>
+                        <strong>
+                            {{ result.weather.Temperature_C }}°C
+                        </strong>
+                    </div>
+                </div>
+
+                <div class="condition-item">
+                    <span class="condition-icon">◉</span>
+                    <div>
+                        <span class="condition-label">VEHICLE</span>
+                        <strong>
+                            {{ result.vehicle_type_display }}
+                        </strong>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="map-legend">
+
+                <div class="legend-title">RISK LEVEL</div>
+
+                <div><span class="legend-dot high"></span> High</div>
+                <div><span class="legend-dot elevated"></span> Elevated</div>
+                <div><span class="legend-dot moderate"></span> Moderate</div>
+                <div><span class="legend-dot low"></span> Low</div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- RISK CARD -->
+    <div class="risk-panel glass-panel">
+
+        <div class="panel-heading">
+
+            <div>
+                <div class="eyebrow">AI PREDICTION</div>
+                <h1>Accident Risk</h1>
+            </div>
+
+            <div class="result-live">
+                RESULT
+            </div>
+
+        </div>
+
+        <div class="risk-gauge">
+
+            <svg viewBox="0 0 100 100"
+                 class="gauge-svg">
+
+                <circle
+                    cx="50"
+                    cy="50"
+                    r="41"
+                    class="gauge-track">
+                </circle>
+
+                <circle
+                    cx="50"
+                    cy="50"
+                    r="41"
+                    class="gauge-value
+                    {% if result.is_elevated %}
+                    elevated-ring
+                    {% else %}
+                    minor-ring
+                    {% endif %}"
+                    style="--risk-value: {{ result.elevated_pct }}%;">
+                </circle>
+
+            </svg>
+
+            <div class="gauge-center">
+
+                <div class="risk-number">
+                    {{ result.elevated_pct }}%
+                </div>
+
+                <div class="risk-label
+                    {% if result.is_elevated %}
+                    elevated-text
+                    {% else %}
+                    minor-text
+                    {% endif %}">
+                    {{ result.label|upper }}
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="risk-scale">
+            <span>0%</span>
+            <span>THRESHOLD {{ result.threshold_pct }}%</span>
+            <span>100%</span>
+        </div>
+
+
+        <div class="prediction-split">
+
+            <div class="prediction-box minor-box">
+
+                <span>MINOR RISK</span>
+
+                <strong>
+                    {{ result.minor_pct }}%
+                </strong>
+
+            </div>
+
+            <div class="prediction-box elevated-box">
+
+                <span>ELEVATED RISK</span>
+
+                <strong>
+                    {{ result.elevated_pct }}%
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div class="risk-meta">
+
+            <div>
+                <span>MODEL</span>
+                <strong>Random Forest + SMOTE</strong>
+            </div>
+
+            <div>
+                <span>LOCAL RISK</span>
+                <strong>{{ result.local_risk_pct }}%</strong>
+            </div>
+
+            <div>
+                <span>UPDATED</span>
+                <strong>LIVE</strong>
+            </div>
+
+        </div>
+
+
+        {% if result.factor_was_other or result.vehicle_was_other %}
+        <div class="small-warning">
+
+            {% if result.factor_was_other %}
+            Contributing factor was mapped to "Other".
+            {% endif %}
+
+            {% if result.vehicle_was_other %}
+            Vehicle type was mapped to "Other".
+            {% endif %}
+
+        </div>
+        {% endif %}
+
+    </div>
+
+</section>
+
+
+<!-- ============================================================
+     ANALYSIS SECTION
+============================================================ -->
+
+<section class="analysis-grid">
+
+    <!-- WHY -->
+    <div class="glass-panel analysis-panel">
+
+        <div class="section-title">
+
+            <div class="section-icon">✦</div>
+
+            <div>
+                <div class="eyebrow">MODEL EXPLANATION</div>
+                <h3>Why this prediction?</h3>
+            </div>
+
+        </div>
+
+        <p class="section-subtitle">
+            Key conditions associated with this assessment.
+        </p>
+
+
+        <div class="factor-list">
+
+            <div class="factor-item">
+
+                <div class="factor-icon">◷</div>
+
+                <div class="factor-copy">
+                    <span>Time</span>
+                    <small>
+                        {{ '%02d:00' % result.hour }},
+                        {{ result.day_name }}
+                    </small>
+                </div>
+
+                <div class="factor-impact">
+                    TIME
+                </div>
+
+            </div>
+
+
+            <div class="factor-item">
+
+                <div class="factor-icon">◉</div>
+
+                <div class="factor-copy">
+                    <span>Traffic context</span>
+                    <small>
+                        {{ result.vehicle_count if result.vehicle_count is defined else 'Multiple' }}
+                        vehicles
+                    </small>
+                </div>
+
+                <div class="factor-impact">
+                    INPUT
+                </div>
+
+            </div>
+
+
+            <div class="factor-item">
+
+                <div class="factor-icon">!</div>
+
+                <div class="factor-copy">
+                    <span>Contributing factor</span>
+                    <small>
+                        {{ result.contributing_factor_display }}
+                    </small>
+                </div>
+
+                <div class="factor-impact warning">
+                    FACTOR
+                </div>
+
+            </div>
+
+
+            <div class="factor-item">
+
+                <div class="factor-icon">☁</div>
+
+                <div class="factor-copy">
+                    <span>Weather</span>
+                    <small>
+                        {{ result.weather.Temperature_C }}°C,
+                        wind {{ result.weather.Windspeed_kmh }} km/h
+                    </small>
+                </div>
+
+                <div class="factor-impact">
+                    LIVE
+                </div>
+
+            </div>
+
+
+            <div class="factor-item">
+
+                <div class="factor-icon">◆</div>
+
+                <div class="factor-copy">
+                    <span>Vehicle</span>
+                    <small>
+                        {{ result.vehicle_type_display }}
+                    </small>
+                </div>
+
+                <div class="factor-impact">
+                    INPUT
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- RISK COMPARISON -->
+    <div class="glass-panel analysis-panel">
+
+        <div class="section-title">
+
+            <div class="section-icon orange">↑</div>
+
+            <div>
+                <div class="eyebrow">HISTORICAL COMPARISON</div>
+                <h3>Risk vs. history</h3>
+            </div>
+
+        </div>
+
+        <p class="section-subtitle">
+            Current prediction compared with the historical rate
+            for this grid location.
+        </p>
+
+
+        <div class="comparison-cards">
+
+            <div class="comparison-card">
+
+                <span>HISTORICAL</span>
+
+                <strong>
+                    {{ result.local_risk_pct }}%
+                </strong>
+
+                <small>
+                    Past data
+                </small>
+
+            </div>
+
+
+            <div class="comparison-arrow">
+                →
+            </div>
+
+
+            <div class="comparison-card current">
+
+                <span>PREDICTED NOW</span>
+
+                <strong>
+                    {{ result.elevated_pct }}%
+                </strong>
+
+                <small>
+                    Current conditions
+                </small>
+
+            </div>
+
+        </div>
+
+
+        {% set delta =
+            (result.elevated_pct - result.local_risk_pct)
+            | round(1)
+        %}
+
+        <div class="delta-bar">
+
+            <div
+                class="delta-fill"
+                style="width: {{ [delta|abs, 100]|min }}%;">
+            </div>
+
+        </div>
+
+
+        <div class="delta-result">
+
+            <strong>
+                {{ '▲' if delta >= 0 else '▼' }}
+                {{ delta|abs }} points
+            </strong>
+
+            <span>
+                {{ 'above' if delta >= 0 else 'below' }}
+                historical average
+            </span>
+
+        </div>
+
+
+        <div class="recommendation">
+
+            <div class="recommendation-icon">
+                ⚠
+            </div>
+
+            <div>
+
+                <strong>Safety recommendation</strong>
+
+                <p>
+                    {% if result.is_elevated %}
+                    Elevated accident risk detected.
+                    Consider additional caution or an alternate route.
+                    {% else %}
+                    Current predicted risk is below the elevated-risk
+                    threshold for this assessment.
+                    {% endif %}
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- CONDITIONS -->
+    <div class="glass-panel analysis-panel">
+
+        <div class="section-title">
+
+            <div class="section-icon cyan">◌</div>
+
+            <div>
+                <div class="eyebrow">LIVE INPUTS</div>
+                <h3>Current conditions</h3>
+            </div>
+
+        </div>
+
+
+        <div class="condition-table">
+
+            <div>
+                <span>Temperature</span>
+                <strong>
+                    {{ result.weather.Temperature_C }}°C
+                </strong>
+            </div>
+
+            <div>
+                <span>Wind</span>
+                <strong>
+                    {{ result.weather.Windspeed_kmh }} km/h
+                </strong>
+            </div>
+
+            <div>
+                <span>Time</span>
+                <strong>
+                    {{ '%02d:00' % result.hour }}
+                </strong>
+            </div>
+
+            <div>
+                <span>Factor</span>
+                <strong>
+                    {{ result.contributing_factor_display }}
+                </strong>
+            </div>
+
+            <div>
+                <span>Vehicle</span>
+                <strong>
+                    {{ result.vehicle_type_display }}
+                </strong>
+            </div>
+
+        </div>
+
+
+        <div class="mini-performance">
+
+            <div class="performance-title">
+                MODEL PERFORMANCE
+                <span>TEST SET</span>
+            </div>
+
+            <div class="performance-grid">
+
+                <div>
+                    <strong>78.6%</strong>
+                    <span>ACCURACY</span>
+                </div>
+
+                <div>
+                    <strong>54%</strong>
+                    <span>PRECISION</span>
+                </div>
+
+                <div>
+                    <strong>52%</strong>
+                    <span>RECALL</span>
+                </div>
+
+                <div>
+                    <strong>53%</strong>
+                    <span>F1</span>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ============================================================
+     MAP / TECHNICAL FOOTER
+============================================================ -->
+
+<section class="footer-actions">
+
+    <div class="technical-status">
+
+        <span class="status-dot"></span>
+
+        <span>
+            Prediction complete
+        </span>
+
+        <small>
+            {{ result.latitude }},
+            {{ result.longitude }}
+        </small>
+
+    </div>
+
+    <div class="action-buttons">
+
+        <button
+            type="button"
+            class="secondary-action"
+            onclick="window.scrollTo({top:0, behavior:'smooth'})">
+            ↑ Back to prediction
+        </button>
+
+        <button
+            type="button"
+            class="primary-action"
+            onclick="window.print()">
+            Generate Report
+        </button>
+
+    </div>
+
+</section>
+
+{% endif %}
+
+
+<!-- ============================================================
+     INPUT FORM
+============================================================ -->
+
+<section class="input-section">
+
+    <div class="input-header">
+
+        <div>
+
+            <div class="eyebrow">
+                RISK ANALYSIS ENGINE
+            </div>
+
+            <h1>Predict accident risk</h1>
+
+            <p>
+                Provide the location, time and traffic conditions.
+                SafeRoute AI will evaluate the current risk.
+            </p>
+
+        </div>
+
+        <div class="input-number">
+            01
+        </div>
+
+    </div>
+
+
+    <form class="prediction-form"
+          method="POST"
+          id="riskForm">
+
+
+        <!-- LOCATION -->
+        <div class="form-section">
+
+            <div class="form-section-title">
+                <span>01</span>
+                Location
+            </div>
+
+
+            <div class="field large-field">
+
+                <label for="addressInput">
+                    Address
+                </label>
+
+                <input
+                    type="text"
+                    name="address"
+                    id="addressInput"
+                    value="{{ form_values.address if form_values else '' }}"
+                    placeholder="e.g. Midtown Manhattan, New York">
+
+                <p class="hint">
+                    Or leave blank and enter latitude and longitude.
+                </p>
+
+            </div>
+
+
+            <div class="field-row">
+
+                <div class="field">
+
+                    <label for="latInput">
+                        Latitude
+                    </label>
+
+                    <input
+                        type="text"
+                        name="latitude"
+                        id="latInput"
+                        value="{{ form_values.latitude if form_values else '' }}"
+                        placeholder="40.7552">
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="lonInput">
+                        Longitude
+                    </label>
+
+                    <input
+                        type="text"
+                        name="longitude"
+                        id="lonInput"
+                        value="{{ form_values.longitude if form_values else '' }}"
+                        placeholder="-73.9871">
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- TIME -->
+        <div class="form-section">
+
+            <div class="form-section-title">
+                <span>02</span>
+                Time
+            </div>
+
+
+            <label class="now-toggle">
+
+                <input
+                    type="checkbox"
+                    name="use_now"
+                    id="useNow"
+                    {{ 'checked' if not form_values or form_values.use_now == 'on' }}>
+
+                <span class="toggle-box"></span>
+
+                <span>
+                    <strong>Use current date and time</strong>
+                    <small>Recommended for live prediction</small>
+                </span>
+
+            </label>
+
+
+            <div class="field">
+
+                <label for="customDatetime">
+                    Or pick a specific date and time
+                </label>
+
+                <input
+                    type="datetime-local"
+                    name="custom_datetime"
+                    id="customDatetime"
+                    value="{{ form_values.custom_datetime if form_values else '' }}">
+
+            </div>
+
+        </div>
+
+
+        <!-- TRAFFIC -->
+        <div class="form-section">
+
+            <div class="form-section-title">
+                <span>03</span>
+                Traffic &amp; vehicle
+            </div>
+
+
+            <div class="field-row">
+
+                <div class="field">
+
+                    <label for="vehicleCount">
+                        Expected number of vehicles
+                    </label>
+
+                    <input
+                        type="number"
+                        name="vehicle_count"
+                        id="vehicleCount"
+                        min="1"
+                        max="10"
+                        value="{{ form_values.vehicle_count if form_values and form_values.vehicle_count else 2 }}">
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="vehicleSelect">
+                        Vehicle type
+                    </label>
+
+                    <select
+                        name="vehicle_type_select"
+                        id="vehicleSelect"
+                        onchange="toggleCustom('vehicle')">
+
+                        <option value="">
+                            Select vehicle
+                        </option>
+
+
+                        {% set vehicle_groups = [
+                          ("Cars and vans",
+                            [
+                              "Sedan",
+                              "Station Wagon/Sport Utility Vehicle",
+                              "Taxi",
+                              "Convertible",
+                              "Limousine",
+                              "Van"
+                            ]),
+
+                          ("Trucks and commercial",
+                            [
+                              "Pick-up Truck",
+                              "Box Truck",
+                              "Tractor Truck Diesel",
+                              "Dump Truck",
+                              "Garbage or Refuse",
+                              "Flat Bed",
+                              "Carry All"
+                            ]),
+
+                          ("Transit and emergency",
+                            [
+                              "Bus",
+                              "Ambulance",
+                              "Fire Truck"
+                            ]),
+
+                          ("Two-wheeled",
+                            [
+                              "Bike",
+                              "E-Bike",
+                              "E-Scooter",
+                              "Motorcycle",
+                              "Moped"
+                            ])
+                        ] %}
+
+
+                        {% for group_name, options in vehicle_groups %}
+
+                        <optgroup label="{{ group_name }}">
+
+                            {% for opt in options %}
+
+                            <option
+                                value="{{ opt }}"
+                                {{ 'selected'
+                                   if form_values
+                                   and form_values.vehicle_type_select == opt }}>
+
+                                {{ opt }}
+
+                            </option>
+
+                            {% endfor %}
+
+                        </optgroup>
+
+                        {% endfor %}
+
+
+                        <option
+                            value="Other"
+                            {{ 'selected'
+                               if form_values
+                               and form_values.vehicle_type_select == 'Other' }}>
+
+                            Other
+
+                        </option>
+
+
+                        <option
+                            value="__custom__"
+                            {{ 'selected'
+                               if form_values
+                               and form_values.vehicle_type_select == '__custom__' }}>
+
+                            Other (type your own)
+
+                        </option>
+
+                    </select>
+
+
+                    <input
+                        type="text"
+                        name="vehicle_type_custom"
+                        id="vehicleCustom"
+                        class="custom-input"
+                        value="{{ form_values.vehicle_type_custom if form_values else '' }}"
+                        placeholder="Type vehicle type">
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- FACTOR -->
+        <div class="form-section">
+
+            <div class="form-section-title">
+                <span>04</span>
+                Contributing factor
+            </div>
+
+
+            <div class="field">
+
+                <label for="factorSelect">
+                    Primary contributing factor
+                </label>
+
+
+                <select
+                    name="contributing_factor_select"
+                    id="factorSelect"
+                    onchange="toggleCustom('factor')">
+
+                    <option value="">
+                        Select contributing factor
+                    </option>
+
+
+                    {% set factor_groups = [
+
+                      ("Driver behavior",
+                        [
+                          "Driver Inattention/Distraction",
+                          "Failure to Yield Right-of-Way",
+                          "Following Too Closely",
+                          "Backing Unsafely",
+                          "Passing or Lane Usage Improper",
+                          "Passing Too Closely",
+                          "Unsafe Lane Changing",
+                          "Traffic Control Disregarded",
+                          "Unsafe Speed",
+                          "Turning Improperly",
+                          "Driver Inexperience",
+                          "Aggressive Driving/Road Rage"
+                        ]),
+
+                      ("Distraction",
+                        [
+                          "Cell Phone (hand-held)",
+                          "Cell Phone (hands-free)",
+                          "Outside Car Distraction",
+                          "Passenger Distraction"
+                        ]),
+
+                      ("Impairment or health",
+                        [
+                          "Fatigued/Drowsy",
+                          "Alcohol Involvement",
+                          "Drugs (illegal)",
+                          "Lost Consciousness",
+                          "Illness"
+                        ]),
+
+                      ("Road and environment",
+                        [
+                          "Pavement Slippery",
+                          "Pavement Defective",
+                          "View Obstructed/Limited",
+                          "Glare",
+                          "Animals Action",
+                          "Obstruction/Debris"
+                        ]),
+
+                      ("Vehicle condition",
+                        [
+                          "Oversized Vehicle",
+                          "Vehicle Malfunction",
+                          "Steering Failure",
+                          "Brakes Defective",
+                          "Tire Failure/Inadequate",
+                          "Other Vehicular"
+                        ]),
+
+                      ("Other",
+                        [
+                          "Reaction to Uninvolved Vehicle",
+                          "Unspecified"
+                        ])
+
+                    ] %}
+
+
+                    {% for group_name, options in factor_groups %}
+
+                    <optgroup label="{{ group_name }}">
+
+                        {% for opt in options %}
+
+                        <option
+                            value="{{ opt }}"
+                            {{ 'selected'
+                               if form_values
+                               and form_values.contributing_factor_select == opt }}>
+
+                            {{ opt }}
+
+                        </option>
+
+                        {% endfor %}
+
+                    </optgroup>
+
+                    {% endfor %}
+
+
+                    <option
+                        value="__custom__"
+                        {{ 'selected'
+                           if form_values
+                           and form_values.contributing_factor_select == '__custom__' }}>
+
+                        Other (type your own)
+
+                    </option>
+
+                </select>
+
+
+                <input
+                    type="text"
+                    name="contributing_factor_custom"
+                    id="factorCustom"
+                    class="custom-input"
+                    value="{{ form_values.contributing_factor_custom if form_values else '' }}"
+                    placeholder="Type the contributing factor">
+
+            </div>
+
+        </div>
+
+
+        <!-- HIDDEN BACKEND VALUES -->
+        <input
+            type="hidden"
+            name="contributing_factor"
+            id="factorHidden">
+
+        <input
+            type="hidden"
+            name="vehicle_type"
+            id="vehicleHidden">
+
+
+        <!-- SUBMIT -->
+        <div class="submit-area">
+
+            <div>
+
+                <strong>Ready to assess risk?</strong>
+
+                <span>
+                    Your prediction uses the trained Midtown Manhattan model.
+                </span>
+
+            </div>
+
+            <button
+                type="submit"
+                class="submit-btn">
+
+                <span>Assess Risk</span>
+                <span class="submit-arrow">→</span>
+
+            </button>
+
+        </div>
+
+    </form>
+
+</section>
+
+</main>
+
+
+<!-- ============================================================
+     JAVASCRIPT
+============================================================ -->
+
+<script>
+
+function toggleCustom(which) {
+
+    var select =
+        document.getElementById(
+            which === 'factor'
+            ? 'factorSelect'
+            : 'vehicleSelect'
+        );
+
+    var custom =
+        document.getElementById(
+            which === 'factor'
+            ? 'factorCustom'
+            : 'vehicleCustom'
+        );
+
+    if (!select || !custom) return;
+
+    custom.style.display =
+        select.value === '__custom__'
+        ? 'block'
+        : 'none';
+}
+
+
+toggleCustom('factor');
+toggleCustom('vehicle');
+
+
+/* -------------------------
+   FORM SUBMISSION
+------------------------- */
+
+document
+    .getElementById('riskForm')
+    .addEventListener('submit', function () {
+
+        var factorSelect =
+            document.getElementById('factorSelect');
+
+        var factorCustom =
+            document.getElementById('factorCustom');
+
+        document.getElementById('factorHidden').value =
+            factorSelect.value === '__custom__'
+            ? factorCustom.value
+            : factorSelect.value;
+
+
+        var vehicleSelect =
+            document.getElementById('vehicleSelect');
+
+        var vehicleCustom =
+            document.getElementById('vehicleCustom');
+
+        document.getElementById('vehicleHidden').value =
+            vehicleSelect.value === '__custom__'
+            ? vehicleCustom.value
+            : vehicleSelect.value;
+
+    });
+
+
+/* -------------------------
+   ADDRESS / COORDINATE
+------------------------- */
+
+var addressInput =
+    document.getElementById('addressInput');
+
+var latInput =
+    document.getElementById('latInput');
+
+var lonInput =
+    document.getElementById('lonInput');
+
+
+function syncAddressToggle() {
+
+    if (!addressInput) return;
+
+    var hasAddress =
+        addressInput.value.trim().length > 0;
+
+    latInput.disabled = hasAddress;
+    lonInput.disabled = hasAddress;
+
+}
+
+
+if (addressInput) {
+
+    addressInput.addEventListener(
+        'input',
+        syncAddressToggle
+    );
+
+    syncAddressToggle();
+
+}
+
+
+/* -------------------------
+   SMOOTH SCROLL
+------------------------- */
+
+document
+    .querySelectorAll('a[href^="#"]')
+    .forEach(function(link) {
+
+        link.addEventListener('click', function(event) {
+
+            var target =
+                document.querySelector(
+                    this.getAttribute('href')
+                );
+
+            if (!target) return;
+
+            event.preventDefault();
+
+            target.scrollIntoView({
+                behavior: 'smooth'
+            });
+
+        });
+
+    });
+
+</script>
+
+
+{% if result %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+
+<script>
+
+var map =
+    L.map('map', {
+        zoomControl: false
+    }).setView(
+        [
+            {{ result.latitude }},
+            {{ result.longitude }}
+        ],
+        15
+    );
+
+
+L.control.zoom({
+    position: 'bottomright'
+}).addTo(map);
+
+
+L.tileLayer(
+    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    {
+        attribution:
+            '&copy; OpenStreetMap contributors',
+        maxZoom: 19
+    }
+).addTo(map);
+
+
+var marker =
+    L.marker([
+        {{ result.latitude }},
+        {{ result.longitude }}
+    ]).addTo(map);
+
+
+marker.bindPopup(
+    "<strong>Selected location</strong><br>" +
+    "{{ result.latitude }}, {{ result.longitude }}"
+);
+
+</script>
+
+{% endif %}
+
+</body>
+</html>
